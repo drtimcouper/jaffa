@@ -21,6 +21,7 @@ from kivy.uix.screenmanager import FadeTransition
 
 
 PAGE_BACKGROUND_COLOR=[.7,.8,1,1]
+
 BUTTON_COLOR = [2,.95,.2,1]
 BLACK = [0,0,0,1]
 
@@ -38,6 +39,8 @@ STORAGE={'apples':  {'price':1.99, 'description': 'nice and juicy', 'junk': 'yep
                     'clementines':{},
                     'satsumas': {},
                     'pomegranates': {},
+                    'zzzz':{},
+                    'zzz': {}
 
                     }
 
@@ -57,7 +60,7 @@ class FruitScreen(Screen):
         self.add_widget(sainsburys)
         self.name = self.__class__.__name__
 
-    # replace with .kv file
+    # replace with .kv file?
     def _update_rect(self, instance, value):
       self.rect.pos= instance.pos
       self.rect.size = instance.size
@@ -69,6 +72,7 @@ class FruitScreen(Screen):
 
 
 class FruitMainScreen(FruitScreen):
+
     def __init__(self, **kwargs):
 
         super(FruitMainScreen, self).__init__(**kwargs)
@@ -80,12 +84,12 @@ class FruitMainScreen(FruitScreen):
                              on_release=self.on_release)
         self.add_widget(btn)
 
-
     def on_release(self, event):
         self.manager.current = self.manager.next()
 
 
 class FruitListScreen(FruitScreen):
+
     def __init__(self, **kwargs):
         super(FruitListScreen, self).__init__(**kwargs)
 
@@ -97,7 +101,7 @@ class FruitListScreen(FruitScreen):
         self.add_widget(btn)
 
         list_widget = FruitListWidget(size_hint=(1, .8),
-                                                pos_hint = {'center_x': .5, 'center_y':.4})
+                                                      pos_hint = {'center_x': .5, 'center_y':.4})
         self.add_widget(list_widget)
 
     def on_release(self, event):
@@ -114,29 +118,21 @@ class FruitDetailScreen(FruitScreen):
                              background_color=BUTTON_COLOR,
                              color=BLACK,
                              on_release=self.on_release)
-
         self.add_widget(btn)
 
-        # self.slate =Label(text='', pos_hint={'center_x': .5, 'center_y':.4},
-        #     size_hint=(.3,.3), color=BLACK,text_size=(200,None)
-        #     )
         self.slate =GridLayout(cols=1, pos_hint={'center_x': .5, 'center_y':.4},
-                                                size_hint=(.5, .4),
-            )
+                                                size_hint=(.5, .4))
         self.add_widget(self.slate)
 
     def on_enter(self):
-
         values_dict = STORAGE.get(self.fruit_name, {})
         lbl = FruitDetailLabel(text='name: %s' % self.fruit_name)
-
         self.slate.add_widget(lbl)
 
         for k  in WANTED_KEYS:
             v = values_dict.get(k, '')
-            btn = FruitDetailLabel(text='%s: %s' % (k,v))
-            self.slate.add_widget(btn)
-
+            lbl = FruitDetailLabel(text='%s: %s' % (k,v))
+            self.slate.add_widget(lbl)
 
     def on_leave(self):
         self.slate.clear_widgets()
@@ -144,6 +140,7 @@ class FruitDetailScreen(FruitScreen):
 
     def on_release(self, event):
         self.manager.current = self.manager.previous()
+
 
 class FruitDetailWidget(BoxLayout):
 
@@ -165,15 +162,13 @@ class FruitDetailWidget(BoxLayout):
 
 
 class FruitDetailLabel(Label):
+
     def __init__(self, **kwargs):
         super(FruitDetailLabel, self).__init__(**kwargs)
         self.color=BLACK
-        self.background_color=[2,2,2,1]
-        #self.text_size = (500,None)
         self.size_hint_y=None
         self.bind(width=lambda s,w: s.setter('text_size')(s, (w,None)))
         self.bind(texture_size=self.setter('size'))
-
 
 
 class FruitListWidget(ScrollView):
@@ -186,15 +181,13 @@ class FruitListWidget(ScrollView):
         return sorted(STORAGE)
 
     def build_grid(self):
-
-        grid = BoxLayout(orientation='vertical')
-        #grid.bind(minimum_height=grid.setter('height'))
+        grid = GridLayout(cols=1,size_hint_y=None,
+                                        row_force_default=True,
+                                        row_default_height=100,
+                                      )
+        grid.bind(minimum_height=grid.setter('height'))
         for name in self.get_names():
-            btn = FruitNameButton(text=name,
-                                                  color=BLACK,
-                                                  background_color=[2,2,2,1],
-                                                  text_size=(700,None),
-                                                  )
+            btn = FruitNameButton(text=name)
             grid.add_widget(btn)
 
         self.add_widget(grid)
@@ -202,6 +195,13 @@ class FruitListWidget(ScrollView):
 
 class FruitNameButton(Button):
     pressed = ListProperty([0, 0])
+
+    def __init__(self, **kwargs):
+         super(FruitNameButton, self).__init__(**kwargs)
+         self.color=BLACK
+         self.text_size=(700,None)
+         self.background_color=[1.4,1.6,2,1]
+         self.size_hint_y=100
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
