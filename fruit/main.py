@@ -1,5 +1,5 @@
 import os
-import weakref
+import itertools
 
 import kivy
 kivy.require('1.7.2')
@@ -24,7 +24,8 @@ PAGE_BACKGROUND_COLOR=[.7,.8,1,1]
 BUTTON_COLOR = [2,.95,.2,1]
 BLACK = [0,0,0,1]
 
-STORAGE={'apples':  {'price':1.99, 'description': 'nice and juicy'},
+WANTED_KEYS = [ 'description','price']
+STORAGE={'apples':  {'price':1.99, 'description': 'nice and juicy', 'junk': 'yep, junk'},
                     'oranges': {'description': 'round and tea-mobile'},
                     'pears': {},
                     'bananas': {},
@@ -104,7 +105,7 @@ class FruitListScreen(FruitScreen):
 
 
 class FruitDetailScreen(FruitScreen):
-    fruit_name='unset'
+    fruit_name=''
     def __init__(self, **kwargs):
         super(FruitDetailScreen, self).__init__(**kwargs)
 
@@ -115,19 +116,64 @@ class FruitDetailScreen(FruitScreen):
                              on_release=self.on_release)
 
         self.add_widget(btn)
-        self.slate = FloatLayout(size_hint=(1, .8))
+
+        # self.slate =Label(text='', pos_hint={'center_x': .5, 'center_y':.4},
+        #     size_hint=(.3,.3), color=BLACK,text_size=(200,None)
+        #     )
+        self.slate =GridLayout(cols=1, pos_hint={'center_x': .5, 'center_y':.4},
+                                                size_hint=(.5, .4),
+            )
         self.add_widget(self.slate)
 
     def on_enter(self):
-        details = Label(text=self.fruit_name)
-        self.slate.add_widget(details)
+
+        values_dict = STORAGE.get(self.fruit_name, {})
+        lbl = FruitDetailLabel(text='name: %s' % self.fruit_name)
+
+        self.slate.add_widget(lbl)
+
+        for k  in WANTED_KEYS:
+            v = values_dict.get(k, '')
+            btn = FruitDetailLabel(text='%s: %s' % (k,v))
+            self.slate.add_widget(btn)
+
 
     def on_leave(self):
         self.slate.clear_widgets()
-        self.fruit_name='unset'
+        self.fruit_name=''
 
     def on_release(self, event):
         self.manager.current = self.manager.previous()
+
+class FruitDetailWidget(BoxLayout):
+
+    def __init__(self, name,**kwargs):
+        super(FruitDetailWidget, self).__init__(**kwargs)
+        self.orientation='vertical'
+        self.pos_hint = {'center_x': .5, 'center_y': .4}
+        self.build(name)
+
+    def build(self, name):
+        values_dict = STORAGE.get(name, {})
+        btn = FruitDetailButton(text=name)
+        self.add_widget(btn)
+
+        for k  in WANTED_KEYS:
+            v = values_dict.get(k, '')
+            btn = FruitDetailButton(text='%s: %s' % (k,v))
+            self.add_widget(btn)
+
+
+class FruitDetailLabel(Label):
+    def __init__(self, **kwargs):
+        super(FruitDetailLabel, self).__init__(**kwargs)
+        self.color=BLACK
+        self.background_color=[2,2,2,1]
+        #self.text_size = (500,None)
+        self.size_hint_y=None
+        self.bind(width=lambda s,w: s.setter('text_size')(s, (w,None)))
+        self.bind(texture_size=self.setter('size'))
+
 
 
 class FruitListWidget(ScrollView):
@@ -175,6 +221,7 @@ class Fruit(App):
         root.add_widget(FruitMainScreen())
         root.add_widget(FruitListScreen())
         root.add_widget(FruitDetailScreen())
+
         return root
 
 
